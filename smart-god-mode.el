@@ -8,7 +8,9 @@
                 org-mode
                 term-mode
                 slime-repl-mode
-                sldb-mode))
+                sldb-mode
+                markdown-mode
+                magit-status-mode))
   (add-to-list 'god-exempt-major-modes mode))
 
 (global-set-key (kbd "<escape>") 'god-local-mode)
@@ -40,8 +42,7 @@
          ("C-v" . scroll-up)         
          ("C-<tab>" . indent-for-tab-command)
          ("C-;" . comment-line)
-         ("RET" . god-mode-newline-and-toggle)
-         ("SPC" . god-mode-spc-and-toggle)))
+         ("RET" . god-mode-newline-and-toggle)))
 
 (defun god-mode-newline-and-toggle (&optional arg interactive)
   "Like newline, but toggles god-mode."
@@ -115,7 +116,7 @@
   (god-mode-toggle))
 
 (setq god-mode-insert-and-exit-keys
-      '("'" "," ":" "/" "-" "*" "@" "_" "+" "=" "!" "#" "$" "%" "^" "&" "."))
+      '("'" "," ":" "/" "-" "SPC" "*" "@" "_" "+" "=" "!" "#" "$" "%" "^" "&" "."))
 (dolist (key god-mode-insert-and-exit-keys)
   (define-key god-local-mode-map (kbd key) 'god-mode-insert-and-exit))
 (defun god-mode-insert-and-exit ()
