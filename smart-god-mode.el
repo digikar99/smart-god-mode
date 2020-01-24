@@ -10,7 +10,9 @@
                 slime-repl-mode
                 sldb-mode
                 markdown-mode
-                magit-status-mode))
+                magit-status-mode
+                pdf-view-mode
+                dired-mode))
   (add-to-list 'god-exempt-major-modes mode))
 
 (global-set-key (kbd "<escape>") 'god-local-mode)
@@ -39,7 +41,8 @@
          ("C-d" . delete-char)
          ("C-o" . other-window)
          ("C-l" . imenu-list-smart-toggle-and-search)
-         ("C-v" . scroll-up)         
+         ("C-v" . scroll-up)
+         ("C-t" . indent-tabs-mode)
          ("C-<tab>" . indent-for-tab-command)
          ("C-;" . comment-line)
          ("RET" . god-mode-newline-and-toggle)))
@@ -153,26 +156,22 @@
                              ,@commands
                              (god-local-mode -1)))       
        (use-package ,mode
-         :bind (("(" . paredit-insert-9)
-                ("C-(" . paredit-insert-9)
-                ("9" . paredit-open-round)
-                :map god-local-mode-map
-                ,@key-function-list)))))
-
-(god-mode-execute-command-and-exit-mode fundamental)
-
-(defun paredit-insert-9 ()
-  (interactive)
-  (insert-char ?\9))
+         :bind (:map god-local-mode-map
+                     ,@key-function-list)))))
 
 (god-mode-execute-command-and-exit-mode
  paredit
  ("<backspace>" (paredit-backward-delete))
  ("<delete>" (paredit-forward-delete))
- ("(" (paredit-insert-9))
+ ("(" (paredit-open-round))
  ("[" (paredit-open-square))
  ("{" (paredit-open-curly))
  ("<" (paredit-open-angled))
  ("\"" (paredit-doublequote))
  ("<left>" (left-char))
- ("9" (paredit-open-round)))
+ (")" (paredit-close-round)))
+
+(god-mode-execute-command-and-exit-mode
+ smartparens
+ ("<delete>" (sp-delete-char))
+ ("<left>" (left-char)))

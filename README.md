@@ -9,3 +9,5 @@ For the time being, take a look at the first 45 lines of [the file](https://gith
 I am finding it quite useful in lisp; not so much in terminals, or org-mode or markdown-mode.
 
 The ultimate development would be to establish a brain computer interface :P; currently it's just hardcoded guesswork of what a programmar might want to do when they press a certain keyboard key.
+
+PS: Turns out I have added a number of functions with names not found in packages.
