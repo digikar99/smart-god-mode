@@ -12,20 +12,25 @@
                 markdown-mode
                 magit-status-mode
                 pdf-view-mode
-                dired-mode))
+                dired-mode
+                shell-mode
+                inferior-python-mode))
   (add-to-list 'god-exempt-major-modes mode))
 
 (global-set-key (kbd "<escape>") 'god-local-mode)
 (setq god-mod-alist '((nil . "C-")
                       ("m" . "M-")
-                      ("t" . "C-M-")))
+                      ("u" . "C-M-")))
 
-(dolist (key '("q" "u"))
+(dolist (key '("q"))
   (define-key god-local-mode-map (kbd key) 'god-local-mode))
-(dolist (key-pair '(("C-x C-h" "C-x h")))
+(dolist (key-pair '(("C-x C-h" "C-x h")
+                    ("C-h C-k" "C-h k")
+                    ("C-h C-v" "C-h v")
+                    ("C-h C-f" "C-h f")))
   (add-to-list 'god-mode-translate-alist key-pair))
 (use-package fundamental-mode
-  :bind (("C-a" . beginning-of-visual-line)
+  :bind (("C-a" . backward-word)
          ("C-s" . isearch-forward)
          ("C-f" . forward-char)
          ("C-j" . newline)
@@ -34,78 +39,20 @@
          ;; ("C-g" . keyboard-quit)
          ("C-i" . indent-for-tab-command)
          ("C-u" . god-local-mode)
-         ("C-r" . replace-symbol)
-         ("C-e" . end-of-visual-line)
+         ("C-r" . query-replace)
+         ("C-S-r" . replace-symbol)
+         ("C-e" . forward-word)
          ("C-z" . undo)
          ("C-k" . kill-line)
          ("C-d" . delete-char)
          ("C-o" . other-window)
          ("C-l" . imenu-list-smart-toggle-and-search)
          ("C-v" . scroll-up)
-         ("C-t" . indent-tabs-mode)
+         ("C-t" . goto-line)
          ("C-<tab>" . indent-for-tab-command)
          ("C-;" . comment-line)
-         ("RET" . god-mode-newline-and-toggle)))
-
-(defun god-mode-newline-and-toggle (&optional arg interactive)
-  "Like newline, but toggles god-mode."
-  (interactive "*P\np")
-  (barf-if-buffer-read-only)
-  ;; Call self-insert so that auto-fill, abbrev expansion etc. happens.
-  ;; Set last-command-event to tell self-insert what to insert.
-  (let* ((was-page-start (and (bolp) (looking-at page-delimiter)))
-         (beforepos (point))
-         (last-command-event ?\n)
-         ;; Don't auto-fill if we have a numeric argument.
-         (auto-fill-function (if arg nil auto-fill-function))
-         (arg (prefix-numeric-value arg))
-         (postproc
-          ;; Do the rest in post-self-insert-hook, because we want to do it
-          ;; *before* other functions on that hook.
-          (lambda ()
-            ;; We are not going to insert any newlines if arg is
-            ;; non-positive.
-            (or (and (numberp arg) (<= arg 0))
-                (cl-assert (eq ?\n (char-before))))
-            ;; Mark the newline(s) `hard'.
-            (if use-hard-newlines
-                (set-hard-newline-properties
-                 (- (point) arg) (point)))
-            ;; If the newline leaves the previous line blank, and we
-            ;; have a left margin, delete that from the blank line.
-            (save-excursion
-              (goto-char beforepos)
-              (beginning-of-line)
-              (and (looking-at "[ \t]$")
-                   (> (current-left-margin) 0)
-                   (delete-region (point)
-                                  (line-end-position))))
-            ;; Indent the line after the newline, except in one case:
-            ;; when we added the newline at the beginning of a line which
-            ;; starts a page.
-            (or was-page-start
-                (move-to-left-margin nil t)))))
-    (unwind-protect
-        (if (not interactive)
-            ;; FIXME: For non-interactive uses, many calls actually
-            ;; just want (insert "\n"), so maybe we should do just
-            ;; that, so as to avoid the risk of filling or running
-            ;; abbrevs unexpectedly.
-            (let ((post-self-insert-hook (list postproc)))
-              (self-insert-command arg))
-          (unwind-protect
-              (progn
-                (add-hook 'post-self-insert-hook postproc nil t)
-                (self-insert-command arg))
-            ;; We first used let-binding to protect the hook, but that
-            ;; was naive since add-hook affects the symbol-default
-            ;; value of the variable, whereas the let-binding might
-            ;; only protect the buffer-local value.
-            (remove-hook 'post-self-insert-hook postproc t)))
-      (cl-assert (not (member postproc post-self-insert-hook)))
-      (cl-assert (not (member postproc (default-value 'post-self-insert-hook))))))
-  (god-mode-toggle)
-  nil)
+         ("M-a" . beginning-of-visual-line)
+         ("M-e" . end-of-visual-line)))
 
 (defun god-mode-toggle ()
   (when (not (member major-mode god-exempt-major-modes))
@@ -115,7 +62,7 @@
 
 (defun god-mode-spc-and-toggle ()
   (interactive)
-  (insert-string " ")
+  (insert " ")
   (god-mode-toggle))
 
 (setq god-mode-insert-and-exit-keys
@@ -125,10 +72,10 @@
 (defun god-mode-insert-and-exit ()
   (interactive)
   (let ((last-key (ignore-errors (edmacro-format-keys (vector last-input-event)))))
-    (insert-string (kbd last-key)))
+    (insert (kbd last-key)))
   (god-local-mode -1))
 
-(setq god-mode-insert-and-enter-keys '(")" "]" "}" "<up>" "<down>" "<right>"))
+(setq god-mode-insert-and-enter-keys '("<up>" "<down>" "<right>"))
 (defun god-mode-insert-and-enter ()
   (interactive)
   (let ((last-key (ignore-errors (edmacro-format-keys (vector last-input-event)))))
@@ -173,5 +120,8 @@
 
 (god-mode-execute-command-and-exit-mode
  smartparens
+ ("(" (self-insert-command 1))
+ ("[" (self-insert-command 1))
+ ("{" (self-insert-command 1))
  ("<delete>" (sp-delete-char))
  ("<left>" (left-char)))
